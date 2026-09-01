@@ -12,8 +12,18 @@ app.use("/users", userRouter);
 
 app.use((err, request, response, next)=>{
     console.log("Error:", err.message);
+
+    if(err.name === "ValidationError" || err.name === "CastError"){
+        return response.status(400).json({
+            message: err.message
+        });
+    }
     
-    response.status(500).send("Internal Server Error");
+    response.status(500).json({
+        message: "Internal Server Error"
+
+    });
+
 });
 
 
@@ -48,8 +58,17 @@ app.use((err, request, response, next)=>{
             response.status(404).send("404 - Page not found")
         });
         
-connectDatabase();
+const startServer = async (request, response) => {
+    try {
+        await connectDatabase();
 
-app.listen(3000, () => {
-    console.log("Express Server listening on port 3000")
-});
+        app.listen(3000, () => {
+            console.log("Express Server listening on port 3000");
+        });
+    } catch (error){
+        console.log("Failed to start the server", error.message);
+        process.exit(1);
+    }
+};
+
+startServer();
