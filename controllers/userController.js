@@ -2,7 +2,57 @@ import User from "../models/userModels.js";
 
 
 const getUsers = async (request, response)=> {
-    const users = await User.find();
+    const { age, minAge, maxAge, search, page = 1, limit = 10, sort } = request.query;
+
+    let filter = {};
+    let sortOption = {};
+
+    if(sort){
+        if(sort.startsWith("-")){
+            sortOption[sort.substring(1)] = -1;
+        } else {
+            sortOption[sort] = 1;
+        }
+    }
+
+    if(age){
+        filter.age = Number(age);
+    }
+    else {
+        if(minAge || maxAge){
+            filter.age = {};
+            if(minAge) filter.age.$gte = Number(minAge);
+            if(maxAge) filter.age.$lte = Number(maxAge);
+        }
+    }
+    if(search){
+        filter.name = { $regex: search, $options: "i"};
+    }
+
+    const pageNumber = Number(page);
+    if(Number.isNaN(pageNumber) || pageNumber < 1 || !Number.isInteger(pageNumber)){
+        return response.status(400).json({
+            message: "Invalid page"
+        });
+    }
+
+    const numberLimit = Number(limit);
+    if(Number.isNaN(numberLimit) || numberLimit < 1 || !Number.isInteger(numberLimit)){
+        return response.status(400).json({
+            message: "Invalid limit"
+        });
+    }
+
+    if(numberLimit > 100){
+        return response.status(400).json({
+            message: "Limit cannot be greater than 100"
+        });
+    }
+
+    const skip = (pageNumber - 1) * numberLimit;
+
+
+    const users = await User.find(filter).sort(sortOption).skip(skip).limit(numberLimit);
 
     response.json(users);
 };
