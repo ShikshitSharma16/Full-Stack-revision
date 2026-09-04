@@ -8,10 +8,20 @@ const getUsers = async (request, response)=> {
     let sortOption = {};
 
     if(sort){
+        const allowedSortFields = ["name", "age", "email"];
+        let sortField = sort;
+        if (sort.startsWith("-")) {
+            sortField = sort.substring(1);
+        }
+        if (!allowedSortFields.includes(sortField)) {
+            return response.status(400).json({
+                message: "Invalid sort field"
+            });
+        }
         if(sort.startsWith("-")){
-            sortOption[sort.substring(1)] = -1;
+            sortOption[sortField] = -1;
         } else {
-            sortOption[sort] = 1;
+            sortOption[sortField] = 1;
         }
     }
 
@@ -76,9 +86,23 @@ const createUser = async (request, response)=> {
 };
 
 const updateUser = async (request, response)=> {
+    const allowedFields = ["name", "age", "email"];
+    const updateData = {};
+    for(const field of allowedFields) {
+        if(request.body[field] !== undefined){
+            updateData[field] = request.body[field];
+        }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+    return response.status(400).json({
+        message: "No valid fields to update"
+    });
+}
+
     const updatedUser = await User.findByIdAndUpdate(
         request.params.id,
-        request.body,
+        updateData,
         {
             returnDocument: "after",
             runValidators: true
@@ -86,7 +110,7 @@ const updateUser = async (request, response)=> {
     );
 
     if(!updatedUser){
-        return response.status(400).json({
+        return response.status(404).json({
             message: "User Not Found"
         });
     }

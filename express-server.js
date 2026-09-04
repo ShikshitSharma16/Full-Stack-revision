@@ -2,12 +2,14 @@ import "dotenv/config";
 import express from "express";
 import connectDatabase from "./config/database.js";
 import userRouter from "./routes/userRoutes.js";
+import postRouter from "./routes/postRoutes.js";
 
 const app = express();
 
 app.use(express.json());
 
 app.use("/users", userRouter);
+app.use("/post", postRouter);
 
 
 app.use((err, request, response, next)=>{
@@ -26,37 +28,25 @@ app.use((err, request, response, next)=>{
 
 });
 
-
-/*app.use((request, response, next)=>{
-    console.log("Method:", request.method);
-    console.log("URL:", request.url);
+        
+function checkAuth(request, response, next){
+    const isAuthenticated = true;
+            
+    if(!isAuthenticated){
+        return response.status(401).send("Unauthorize");
+    }
+            
     next();
+    }
+        
+    app.get("/profile", checkAuth, (request, response)=>{
+        response.send("Welcome to profile page");
     });
-    
-    app.get("/", (request, response)=>{
-        console.log("Route executed");
-        
-        response.send("Home Page");
-        });*/
-        
-        function checkAuth(request, response, next){
-            const isAuthenticated = true;
-            
-            if(!isAuthenticated){
-                return response.status(401).send("Unauthorize");
-            }
-            
-            next();
-        }
-        
-        app.get("/profile", checkAuth, (request, response)=>{
-            response.send("Welcome to profile page");
-        });
         
         
-        app.use((request, response)=> {
-            response.status(404).send("404 - Page not found")
-        });
+    app.use((request, response)=> {
+        response.status(404).send("404 - Page not found")
+    });
         
 const startServer = async (request, response) => {
     try {
